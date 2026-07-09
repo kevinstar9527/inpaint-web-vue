@@ -59,7 +59,7 @@ function getModel(modelType: modelType) {
     const modelList = [
       {
         name: 'realesrgan-x4',
-        url: '/inpaint-web/models/realesrgan-x4.onnx',
+        url: '/models/realesrgan-x4.onnx',
         backupUrl:
           'https://huggingface.co/lxfater/inpaint-web/resolve/main/realesrgan-x4.onnx',
       },

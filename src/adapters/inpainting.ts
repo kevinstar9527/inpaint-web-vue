@@ -151,17 +151,13 @@ function imageDataToDataURL(imageData) {
 function configEnv(capabilities) {
   ort.env.wasm.wasmPaths =
     'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.16.3/dist/'
-  if (capabilities.webgpu) {
-    ort.env.wasm.numThreads = 1
-  } else {
-    if (capabilities.threads) {
-      ort.env.wasm.numThreads = navigator.hardwareConcurrency ?? 4
-    }
-    if (capabilities.simd) {
-      ort.env.wasm.simd = true
-    }
-    ort.env.wasm.proxy = true
+  if (capabilities.threads) {
+    ort.env.wasm.numThreads = navigator.hardwareConcurrency ?? 4
   }
+  if (capabilities.simd) {
+    ort.env.wasm.simd = true
+  }
+  ort.env.wasm.proxy = true
   console.log('env', ort.env.wasm)
 }
 const resizeMark = (
@@ -193,7 +189,7 @@ const resizeMark = (
     resizedImage.src = resizedImageUrl
   })
 }
-let model: ArrayBuffer | null = null
+let model: ort.InferenceSession | null = null
 export default async function inpaint(
   imageFile: File | HTMLImageElement,
   maskBase64: string
@@ -204,7 +200,7 @@ export default async function inpaint(
     configEnv(capabilities)
     const modelBuffer = await ensureModel('inpaint')
     model = await ort.InferenceSession.create(modelBuffer, {
-      executionProviders: [capabilities.webgpu ? 'webgpu' : 'wasm'],
+      executionProviders: ['wasm'],
     })
   }
   console.timeEnd('sessionCreate')

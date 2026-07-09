@@ -235,7 +235,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, onUnmounted, computed } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 import { useWindowSize } from '@vueuse/core'
 import { ArrowDownTrayIcon, EyeIcon, ViewColumnsIcon } from '@heroicons/vue/24/outline'
 import inpaint from './adapters/inpainting'
@@ -494,7 +494,7 @@ watch(
     canvas.onmouseleave = () => (showBrush.value = false)
     canvas.onmousedown = onPointerStart
 
-    onUnmounted(() => {
+    return () => {
       canvas.removeEventListener('mousemove', onMouseDrag)
       canvas.removeEventListener('mousemove', onMouseMove)
       canvas.removeEventListener('mouseup', onPointerUp)
@@ -504,7 +504,7 @@ watch(
       canvas.onmouseenter = null
       canvas.onmouseleave = null
       canvas.onmousedown = null
-    })
+    }
   },
   { deep: true }
 )
@@ -544,10 +544,10 @@ watch(
     separatorRef.value.addEventListener('mousedown', separatorDown)
     window.addEventListener('mouseup', separatorUp)
 
-    onUnmounted(() => {
+    return () => {
       separatorRef.value?.removeEventListener('mousedown', separatorDown)
       window.removeEventListener('mouseup', separatorUp)
-    })
+    }
   }
 )
 
@@ -581,9 +581,9 @@ watch(
       }
     }
     window.addEventListener('keydown', handler)
-    onUnmounted(() => {
+    return () => {
       window.removeEventListener('keydown', handler)
-    })
+    }
   },
   { deep: true }
 )
@@ -666,6 +666,7 @@ const onSuperResolution = async () => {
     console.error('superResolution', error)
   } finally {
     isInpaintingLoading.value = false
+    draw()
   }
 }
 
