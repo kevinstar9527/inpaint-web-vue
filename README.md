@@ -20,7 +20,7 @@ https://github.com/lxfater/inpaint-web/assets/22794120/3a8d894f-9749-4685-b947-8
 
 ## Demo link
 
-Demo link:https://inpaintweb.lxfater.com/
+Demo link:https://inpaint.code-coffee.com/
 
 ## Project Roadmap
 

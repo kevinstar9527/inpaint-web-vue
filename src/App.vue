@@ -75,7 +75,7 @@
         <p>
           任何问题到:
           <a
-            href="https://github.com/lxfater/inpaint-web"
+            href="https://github.com/kevinstar9527/inpaint-web"
             style="color: blue"
             rel="noreferrer"
             target="_blank"
@@ -87,7 +87,7 @@
         <p>
           For any questions, please go to:
           <a
-            href="https://github.com/lxfater/inpaint-web"
+            href="https://github.com/kevinstar9527/inpaint-web"
             style="color: blue"
             rel="noreferrer"
             target="_blank"
