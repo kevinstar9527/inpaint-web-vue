@@ -156,7 +156,7 @@ onMounted(() => {
 })
 
 async function startWithDemoImage(img: string) {
-  const imgBlob = await fetch(`/inpaint-web/examples/${img}.jpeg`).then(r => r.blob())
+  const imgBlob = await fetch(`/examples/${img}.jpeg`).then(r => r.blob())
   file.value = new File([imgBlob], `${img}.jpeg`, { type: 'image/jpeg' })
 }
 

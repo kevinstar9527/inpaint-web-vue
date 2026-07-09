@@ -37,17 +37,17 @@ function getModel(modelType: modelType) {
     const modelList = [
       {
         name: 'model',
-        url: '/inpaint-web/models/migan.onnx',
+        url: '/models/migan.onnx',
         backupUrl: 'https://huggingface.co/lxfater/inpaint-web/resolve/main/migan.onnx',
       },
       {
         name: 'model-perf',
-        url: '/inpaint-web/models/migan-perf.onnx',
+        url: '/models/migan-perf.onnx',
         backupUrl: 'https://huggingface.co/andraniksargsyan/migan/resolve/main/migan.onnx',
       },
       {
         name: 'migan-pipeline-v2',
-        url: '/inpaint-web/models/migan_pipeline_v2.onnx',
+        url: '/models/migan_pipeline_v2.onnx',
         backupUrl:
           'https://huggingface.co/andraniksargsyan/migan/resolve/main/migan_pipeline_v2.onnx',
       },
