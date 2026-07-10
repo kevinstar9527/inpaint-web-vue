@@ -190,20 +190,31 @@ const resizeMark = (
   })
 }
 let model: ort.InferenceSession | null = null
+
+export function resetModel() {
+  model = null
+}
+
 export default async function inpaint(
   imageFile: File | HTMLImageElement,
-  maskBase64: string
+  maskBase64: string,
+  signal?: AbortSignal
 ) {
-  console.time('sessionCreate')
   if (!model) {
+    const startTime = Date.now()
     const capabilities = await getCapabilities()
     configEnv(capabilities)
     const modelBuffer = await ensureModel('inpaint')
     model = await ort.InferenceSession.create(modelBuffer, {
       executionProviders: ['wasm'],
     })
+    console.log(`sessionCreate: ${Date.now() - startTime}ms`)
   }
-  console.timeEnd('sessionCreate')
+
+  if (signal?.aborted) {
+    throw new Error('Operation cancelled')
+  }
+
   console.time('preProcess')
 
   const [originalImg, originalMark] = await Promise.all([
@@ -213,12 +224,20 @@ export default async function inpaint(
     loadImage(maskBase64),
   ])
 
+  if (signal?.aborted) {
+    throw new Error('Operation cancelled')
+  }
+
   const [img, mark] = await Promise.all([
     processImage(originalImg),
     processMark(
       await resizeMark(originalMark, originalImg.width, originalImg.height)
     ),
   ])
+
+  if (signal?.aborted) {
+    throw new Error('Operation cancelled')
+  }
 
   const imageTensor = new ort.Tensor('uint8', img, [
     1,
@@ -246,6 +265,10 @@ export default async function inpaint(
   console.time('run')
   const results = await model.run(Feed)
   console.timeEnd('run')
+
+  if (signal?.aborted) {
+    throw new Error('Operation cancelled')
+  }
 
   console.time('postProcess')
   const outsTensor = results[model.outputNames[0]]

@@ -39,7 +39,8 @@ function imgProcess(img: Mat) {
 async function tileProc(
   inputTensor: ort.Tensor,
   session: ort.InferenceSession,
-  callback: (progress: number) => void
+  callback: (progress: number) => void,
+  signal?: AbortSignal
 ) {
   const inputDims = inputTensor.dims
   const imageW = inputDims[3]
@@ -84,6 +85,10 @@ async function tileProc(
 
   for (let i = 0; i < tilesx; i++) {
     for (let j = 0; j < tilesy; j++) {
+      if (signal?.aborted) {
+        throw new Error('Operation cancelled')
+      }
+
       const ti = Date.now()
       const tileW = Math.min(tileSizePre, imageW - i * tileSizePre)
       const tileH = Math.min(tileSizePre, imageH - j * tileSizePre)
@@ -249,25 +254,40 @@ function imageDataToDataURL(imageData: ImageData) {
   return canvas.toDataURL()
 }
 let model: ArrayBuffer | null = null
+
+export function resetModel() {
+  model = null
+}
+
 export default async function superResolution(
   imageFile: File | HTMLImageElement,
-  callback: (progress: number) => void
+  callback: (progress: number) => void,
+  signal?: AbortSignal
 ) {
-  console.time('sessionCreate')
   if (!model) {
+    console.time('sessionCreate')
     const capabilities = await getCapabilities()
     configEnv(capabilities)
     const modelBuffer = await ensureModel('superResolution')
     model = await ort.InferenceSession.create(modelBuffer, {
       executionProviders: [capabilities.webgpu ? 'webgpu' : 'wasm'],
     })
+    console.timeEnd('sessionCreate')
   }
-  console.timeEnd('sessionCreate')
+
+  if (signal?.aborted) {
+    throw new Error('Operation cancelled')
+  }
 
   const img =
     imageFile instanceof HTMLImageElement
       ? imageFile
       : await loadImage(URL.createObjectURL(imageFile))
+
+  if (signal?.aborted) {
+    throw new Error('Operation cancelled')
+  }
+
   const imageTersorData = await processImage(img)
   const imageTensor = new ort.Tensor('float32', imageTersorData, [
     1,
@@ -276,7 +296,16 @@ export default async function superResolution(
     img.width,
   ])
 
-  const result = await tileProc(imageTensor, model, callback)
+  if (signal?.aborted) {
+    throw new Error('Operation cancelled')
+  }
+
+  const result = await tileProc(imageTensor, model, callback, signal)
+
+  if (signal?.aborted) {
+    throw new Error('Operation cancelled')
+  }
+
   console.time('postProcess')
   const outsTensor = result
   const chwToHwcData = postProcess(

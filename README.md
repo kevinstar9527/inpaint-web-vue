@@ -8,6 +8,8 @@ A free and open-source inpainting & image-upscaling tool powered by webgpu and w
 
 基于 Webgpu 技术和 wasm 技术的免费开源 inpainting & image-upscaling 工具, 纯浏览器端实现。
 
+使用Vue3 + TypeScript + Tailwindcss 实现前端界面。
+
 </div>
 
 ## Inpaint（图片修复）

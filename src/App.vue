@@ -6,7 +6,7 @@
           file ? '' : 'opacity-50 pointer-events-none',
           'pl-1 pr-1 mx-1 sm:mx-5',
         ].join(' ')"
-        @click="file = undefined"
+        @click="handleStartNew"
       >
         <template #icon>
           <ArrowLeftIcon class="w-6 h-6" />
@@ -46,7 +46,7 @@
       :style="{ height: 'calc(100vh - 56px)' }"
       class="relative"
     >
-      <Editor v-if="file" :file="file" />
+      <Editor v-if="file" ref="editorRef" :file="file" />
       <div v-else class="flex h-full flex-1 flex-col items-center justify-center overflow-hidden px-4">
         <div class="h-72 sm:w-1/2 max-w-5xl">
           <FileSelect
@@ -136,6 +136,7 @@ import {
 const file = ref<File>()
 const stateLanguageTag = ref<'en' | 'zh'>('zh')
 const isDarkMode = ref(false)
+const editorRef = ref<InstanceType<typeof Editor>>()
 
 onSetLanguageTag(() => {
   stateLanguageTag.value = languageTag() as 'en' | 'zh'
@@ -190,5 +191,18 @@ function toggleLanguage() {
 function toggleTheme() {
   isDarkMode.value = !isDarkMode.value
   document.documentElement.classList.toggle('dark', isDarkMode.value)
+}
+
+function handleStartNew() {
+  if (editorRef.value?.isInpaintingLoading) {
+    const confirmed = confirm(
+      languageTag() === 'zh'
+        ? '正在处理中，确定要中止并开始新的编辑吗？'
+        : 'Processing in progress. Are you sure you want to abort and start a new edit?'
+    )
+    if (!confirmed) return
+    editorRef.value.abortOperation()
+  }
+  file.value = undefined
 }
 </script>

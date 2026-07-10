@@ -235,11 +235,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, computed } from 'vue'
+import { ref, watch, onMounted, onUnmounted, computed } from 'vue'
 import { useWindowSize } from '@vueuse/core'
 import { ArrowDownTrayIcon, EyeIcon, ViewColumnsIcon } from '@heroicons/vue/24/outline'
-import inpaint from './adapters/inpainting'
-import superResolution from './adapters/superResolution'
+import inpaint, { resetModel as resetInpaintModel } from './adapters/inpainting'
+import superResolution, { resetModel as resetSuperResolutionModel } from './adapters/superResolution'
 import Button from './components/Button.vue'
 import Slider from './components/Slider.vue'
 import { downloadImage, loadImage, useImage } from './utils'
@@ -285,8 +285,25 @@ const canvasRef = ref<HTMLCanvasElement>()
 const downloaded = ref(true)
 const downloadProgress = ref(0)
 const windowSize = useWindowSize()
+const abortController = ref<AbortController | null>(null)
 
 const undoText = m.undo()
+
+function abortOperation() {
+  if (abortController.value) {
+    abortController.value.abort()
+    abortController.value = null
+  }
+  isInpaintingLoading.value = false
+  // 立即重置模型，避免 session 损坏导致下次操作失败
+  resetInpaintModel()
+  resetSuperResolutionModel()
+}
+
+defineExpose({
+  isInpaintingLoading,
+  abortOperation,
+})
 const brushSizeText = m.bruch_size()
 const originalText = m.original()
 const upscaleText = m.upscale()
@@ -425,6 +442,8 @@ watch(
         return
       }
       const loading = onloading()
+      abortController.value = new AbortController()
+      const signal = abortController.value.signal
       canvas.removeEventListener('mousemove', onMouseDrag)
       canvas.removeEventListener('mouseup', onPointerUp)
       refreshCanvasMask()
@@ -432,13 +451,27 @@ watch(
         const start = Date.now()
         console.log('inpaint_start')
         const newFile = renders.value.slice(-1)[0] ?? props.file
-        const res = await inpaint(newFile, maskCanvas.toDataURL())
+        const res = await inpaint(newFile, maskCanvas.toDataURL(), signal)
+
+        // 检查是否被取消
+        if (signal.aborted) {
+          console.log('inpaint_cancelled_after_run')
+          return
+        }
+
         if (!res) {
           throw new Error('empty response')
         }
         const newRender = new Image()
         newRender.dataset.id = Date.now().toString()
         await loadImage(newRender, res)
+
+        // 再次检查是否被取消
+        if (signal.aborted) {
+          console.log('inpaint_cancelled_after_load')
+          return
+        }
+
         renders.value.push(newRender)
         lines.value.push({ pts: [], src: '' } as Line)
         console.log('inpaint_processed', {
@@ -448,16 +481,29 @@ watch(
         console.log('inpaint_failed', {
           error: e,
         })
-        alert(e.message ? e.message : e.toString())
-      }
-      if (historyListRef.value) {
-        const { scrollWidth, clientWidth } = historyListRef.value
-        if (scrollWidth > clientWidth) {
-          historyListRef.value.scrollTo(scrollWidth, 0)
+        if (e.message !== 'Operation cancelled') {
+          // 如果是 session 错误，重置模型
+          if (typeof e === 'number' || (e.message && e.message.includes('session'))) {
+            resetInpaintModel()
+          }
+          alert(e.message ? e.message : e.toString())
+        } else {
+          // 如果是取消操作，也重置模型以确保下次能正常工作
+          resetInpaintModel()
+        }
+      } finally {
+        if (historyListRef.value) {
+          const { scrollWidth, clientWidth } = historyListRef.value
+          if (scrollWidth > clientWidth) {
+            historyListRef.value.scrollTo(scrollWidth, 0)
+          }
+        }
+        loading.close()
+        abortController.value = null
+        if (!signal.aborted) {
+          draw()
         }
       }
-      loading.close()
-      draw()
     }
 
     canvas.addEventListener('mousemove', onMouseMove)
@@ -644,13 +690,14 @@ const onSuperResolution = async () => {
     downloaded.value = true
   }
   isInpaintingLoading.value = true
+  abortController.value = new AbortController()
   try {
     const start = Date.now()
     console.log('superResolution_start')
     const newFile = renders.value.at(-1) ?? props.file
     const res = await superResolution(newFile, (p: number) => {
       generateProgress.value = p
-    })
+    }, abortController.value.signal)
     if (!res) {
       throw new Error('empty response')
     }
@@ -664,8 +711,20 @@ const onSuperResolution = async () => {
     })
   } catch (error) {
     console.error('superResolution', error)
+    if ((error as Error).message !== 'Operation cancelled') {
+      // 如果是 session 错误，重置模型
+      const errorMsg = (error as Error).message || String(error)
+      if (typeof error === 'number' || errorMsg.includes('session')) {
+        resetSuperResolutionModel()
+      }
+      alert(errorMsg)
+    } else {
+      // 如果是取消操作，也重置模型以确保下次能正常工作
+      resetSuperResolutionModel()
+    }
   } finally {
     isInpaintingLoading.value = false
+    abortController.value = null
     draw()
   }
 }
@@ -681,6 +740,14 @@ onMounted(() => {
     if (ctx) {
       context.value = ctx
     }
+  }
+})
+
+onUnmounted(() => {
+  // 组件卸载时自动中止所有操作
+  if (abortController.value) {
+    abortController.value.abort()
+    abortController.value = null
   }
 })
 </script>
