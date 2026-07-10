@@ -38,6 +38,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import * as m from '../paraglide/messages'
+import { stateLanguageTag } from '../paraglide/reactive'
 
 interface Props {
   onSelection: (file: File) => void
@@ -48,7 +49,10 @@ const props = defineProps<Props>()
 const dragHover = ref(false)
 const uploadElemId = `file-upload-${Math.random().toString()}`
 
-const dropZoneText = m.drop_zone()
+const dropZoneText = computed(() => {
+  stateLanguageTag.value
+  return m.drop_zone()
+})
 
 const dropZoneClass = computed(() => {
   return [

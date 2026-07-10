@@ -19,10 +19,10 @@
       </Button>
       <div class="text-center">
         <h1 class="text-3xl font-bold text-gray-900 dark:text-white tracking-tight mb-2">
-          智能图像修复
+          {{ m.app_title() }}
         </h1>
         <p class="text-sm text-gray-500 dark:text-gray-400">
-          本地 AI · 一键去水印 · 高清修复
+          {{ m.app_subtitle() }}
         </p>
       </div>
       <div class="hidden md:flex justify-end w-[300px] mx-2 sm:mx-6 space-x-2">
@@ -33,7 +33,7 @@
           </template>
         </Button>
         <Button class="rounded-full" @click="toggleLanguage">
-          <p>{{ languageTag() === 'en' ? '切换到中文' : 'en' }}</p>
+          <p>{{ stateLanguageTag === 'en' ? '切换到中文' : 'English' }}</p>
         </Button>
         <Button
           class="rounded-full"
@@ -121,7 +121,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { onClickOutside } from '@vueuse/core'
 import { ArrowLeftIcon, InformationCircleIcon, SunIcon, MoonIcon } from '@heroicons/vue/24/outline'
 import Button from './components/Button.vue'
@@ -134,23 +134,25 @@ import { downloadModel } from './adapters/cache'
 import * as m from './paraglide/messages'
 import {
   languageTag,
-  onSetLanguageTag,
   setLanguageTag,
 } from './paraglide/runtime'
+import { stateLanguageTag } from './paraglide/reactive'
 
 const file = ref<File>()
-const stateLanguageTag = ref<'en' | 'zh'>('zh')
 const isDarkMode = ref(false)
 const editorRef = ref<InstanceType<typeof Editor>>()
-
-onSetLanguageTag(() => {
-  stateLanguageTag.value = languageTag() as 'en' | 'zh'
-})
 
 onMounted(() => {
   // 默认日间模式
   isDarkMode.value = false
   document.documentElement.classList.remove('dark')
+  // 设置初始 title
+  document.title = `${m.app_title()} - ${m.app_subtitle()}`
+})
+
+// 监听语言变化更新 title
+watch(stateLanguageTag, () => {
+  document.title = `${m.app_title()} - ${m.app_subtitle()}`
 })
 
 const showAbout = ref(false)
@@ -158,10 +160,22 @@ const modalRef = ref<HTMLDivElement>()
 
 const downloadProgress = ref(100)
 
-const startNewText = m.start_new()
-const feedbackText = m.feedback()
-const tryItImagesText = m.try_it_images()
-const inpaintModelDownloadMessage = m.inpaint_model_download_message()
+const startNewText = computed(() => {
+  stateLanguageTag.value // 依赖响应式变量以触发更新
+  return m.start_new()
+})
+const feedbackText = computed(() => {
+  stateLanguageTag.value
+  return m.feedback()
+})
+const tryItImagesText = computed(() => {
+  stateLanguageTag.value
+  return m.try_it_images()
+})
+const inpaintModelDownloadMessage = computed(() => {
+  stateLanguageTag.value
+  return m.inpaint_model_download_message()
+})
 
 const demoImages = ['bag', 'dog', 'car', 'bird', 'jacket', 'shoe', 'paris']
 

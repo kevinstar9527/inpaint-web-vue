@@ -247,6 +247,7 @@ import Progress from './components/Progress.vue'
 import { modelExists, downloadModel } from './adapters/cache'
 import Modal from './components/Modal.vue'
 import * as m from './paraglide/messages'
+import { stateLanguageTag } from './paraglide/reactive'
 
 interface Props {
   file: File
@@ -287,7 +288,10 @@ const downloadProgress = ref(0)
 const windowSize = useWindowSize()
 const abortController = ref<AbortController | null>(null)
 
-const undoText = m.undo()
+const undoText = computed(() => {
+  stateLanguageTag.value
+  return m.undo()
+})
 
 function abortOperation() {
   if (abortController.value) {
@@ -304,11 +308,26 @@ defineExpose({
   isInpaintingLoading,
   abortOperation,
 })
-const brushSizeText = m.bruch_size()
-const originalText = m.original()
-const upscaleText = m.upscale()
-const downloadText = m.download()
-const upscaleingModelDownloadMessage = m.upscaleing_model_download_message()
+const brushSizeText = computed(() => {
+  stateLanguageTag.value
+  return m.bruch_size()
+})
+const originalText = computed(() => {
+  stateLanguageTag.value
+  return m.original()
+})
+const upscaleText = computed(() => {
+  stateLanguageTag.value
+  return m.upscale()
+})
+const downloadText = computed(() => {
+  stateLanguageTag.value
+  return m.download()
+})
+const upscaleingModelDownloadMessage = computed(() => {
+  stateLanguageTag.value
+  return m.upscaleing_model_download_message()
+})
 
 function drawLines(
   ctx: CanvasRenderingContext2D,
