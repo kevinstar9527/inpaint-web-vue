@@ -69,8 +69,23 @@
       ref="brushRef"
     />
 
-    <!-- Bottom Controls -->
-    <div class="flex-shrink-0 bg-white dark:bg-neutral-900 px-3 pb-3 pt-1">
+    <!-- Upscaled result: only show image + download button -->
+    <div v-if="showUpscaledResult" class="flex-shrink-0 bg-white dark:bg-neutral-900 px-3 pb-3 pt-1">
+      <button
+        class="w-full py-3.5 rounded-full text-white font-semibold text-base transition-all duration-200 active:scale-[0.98] flex items-center justify-center space-x-2 bg-gradient-to-r from-cyan-400 to-cyan-500 shadow-lg shadow-cyan-500/30"
+        @click="saveToAlbum"
+      >
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="7 10 12 15 17 10" />
+          <line x1="12" y1="15" x2="12" y2="3" />
+        </svg>
+        <span>保存到相册</span>
+      </button>
+    </div>
+
+    <!-- Bottom Controls (hidden when showing upscaled result) -->
+    <div v-else class="flex-shrink-0 bg-white dark:bg-neutral-900 px-3 pb-3 pt-1">
       <!-- Toolbar Row: brush size dots + undo/redo -->
       <div class="flex items-center justify-between w-full py-2">
         <!-- Brush Size Label + Dots -->
@@ -113,10 +128,10 @@
         </div>
       </div>
 
-      <!-- Mode 1: Drawing mode - show "开始擦除" button -->
-      <div v-if="showEraseButton">
+      <!-- Mode 1: Drawing mode - show "开始擦除" + "4倍放大" buttons -->
+      <div v-if="showEraseButton" class="flex space-x-3">
         <button
-          class="w-full py-3.5 rounded-full text-white font-semibold text-base transition-all duration-200 active:scale-[0.98] flex items-center justify-center space-x-2"
+          class="flex-1 py-3.5 rounded-full text-white font-semibold text-base transition-all duration-200 active:scale-[0.98] flex items-center justify-center space-x-2"
           :class="hasMask ? 'bg-gradient-to-r from-cyan-400 to-cyan-500 shadow-lg shadow-cyan-500/30' : 'bg-gray-300 dark:bg-neutral-700 text-gray-500 dark:text-gray-400'"
           :disabled="!hasMask || isInpaintingLoading"
           @click="startErase"
@@ -128,6 +143,19 @@
             <circle cx="11" cy="11" r="2" />
           </svg>
           <span>开始擦除</span>
+        </button>
+        <button
+          class="flex-1 py-3.5 rounded-full text-white font-semibold text-base transition-all duration-200 active:scale-[0.98] flex items-center justify-center space-x-2 bg-gradient-to-r from-purple-400 to-purple-500 shadow-lg shadow-purple-500/30"
+          :disabled="isInpaintingLoading"
+          @click="onSuperResolution"
+        >
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 3h6v6" />
+            <path d="M9 21H3v-6" />
+            <path d="M21 3l-7 7" />
+            <path d="M3 21l7-7" />
+          </svg>
+          <span>4倍放大</span>
         </button>
       </div>
 
@@ -219,6 +247,8 @@ const abortController = ref<AbortController | null>(null)
 const redoStrokes = ref<Line[]>([])
 // Whether to show the "开始擦除" button (true = drawing mode, false = result mode)
 const showEraseButton = ref(true)
+// Whether showing upscaled result (hide all controls except download)
+const showUpscaledResult = ref(false)
 // The base file for next erasure (original or last result)
 const baseFile = ref<File | null>(null)
 
@@ -550,6 +580,66 @@ const startErase = async () => {
 // Continue erasing: same as startErase, process the strokes directly
 const continueErase = () => {
   startErase()
+}
+
+// 4x Super Resolution
+const onSuperResolution = async () => {
+  if (!(await modelExists('superResolution'))) {
+    downloaded.value = false
+    await downloadModel('superResolution', (p: number) => {
+      downloadProgress.value = p
+    })
+    downloaded.value = true
+  }
+  // First clear strokes so they don't appear during upscale
+  strokes.value = []
+  redoStrokes.value = []
+  currentStroke.value = null
+  draw()
+  
+  isInpaintingLoading.value = true
+  abortController.value = new AbortController()
+  try {
+    const start = Date.now()
+    console.log('superResolution_start')
+    // Use the last rendered result or original file as the source for upscaling
+    const newFile = renders.value.at(-1) ?? props.file
+    const res = await superResolution(newFile, (p: number) => {
+      generateProgress.value = p
+    }, abortController.value.signal)
+    if (!res) {
+      throw new Error('empty response')
+    }
+    const newRender = new Image()
+    newRender.dataset.id = Date.now().toString()
+    await loadImage(newRender, res)
+    renders.value.push(newRender)
+    // Show upscaled result mode: hide all controls, only show download
+    showUpscaledResult.value = true
+    showEraseButton.value = false
+    // Reset inpaint model to avoid session errors when going back
+    resetInpaintModel()
+    // Redraw canvas with upscaled image
+    draw()
+    console.log('superResolution_processed', {
+      duration: Date.now() - start,
+    })
+  } catch (error) {
+    console.error('superResolution', error)
+    if ((error as Error).message !== 'Operation cancelled') {
+      const errorMsg = (error as Error).message || String(error)
+      if (typeof error === 'number' || errorMsg.includes('session')) {
+        resetSuperResolutionModel()
+      }
+      alert(errorMsg)
+    } else {
+      resetSuperResolutionModel()
+    }
+  } finally {
+    isInpaintingLoading.value = false
+    const wasAborted = abortController.value?.signal.aborted
+    abortController.value = null
+  }
 }
 
 // Save to album
