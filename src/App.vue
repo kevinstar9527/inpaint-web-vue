@@ -67,6 +67,13 @@
       <div class="flex items-center space-x-1">
         <button
           class="w-8 h-8 flex items-center justify-center rounded-full text-gray-500 dark:text-gray-400"
+          @click="toggleTheme"
+        >
+          <SunIcon v-if="!isDarkMode" class="w-4 h-4" />
+          <MoonIcon v-else class="w-4 h-4" />
+        </button>
+        <button
+          class="w-8 h-8 flex items-center justify-center rounded-full text-gray-500 dark:text-gray-400"
           @click="toggleLanguage"
         >
           <span class="text-xs">{{ stateLanguageTag === 'en' ? '中' : 'EN' }}</span>

@@ -142,8 +142,21 @@
         </div>
       </div>
 
-      <!-- Mode 1: Drawing mode - show "开始擦除" + "4倍放大" buttons -->
+      <!-- Mode 1: Drawing mode - show "4倍放大" + "开始擦除" buttons -->
       <div v-if="showEraseButton" class="flex space-x-3">
+        <button
+          class="flex-1 py-3.5 rounded-full text-white font-semibold text-base transition-all duration-200 active:scale-[0.98] flex items-center justify-center space-x-2 bg-gradient-to-r from-purple-400 to-purple-500 shadow-lg shadow-purple-500/30"
+          :disabled="isInpaintingLoading"
+          @click="onSuperResolution"
+        >
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 3h6v6" />
+            <path d="M9 21H3v-6" />
+            <path d="M21 3l-7 7" />
+            <path d="M3 21l7-7" />
+          </svg>
+          <span>{{ upscaleText }}</span>
+        </button>
         <button
           class="flex-1 py-3.5 rounded-full text-white font-semibold text-base transition-all duration-200 active:scale-[0.98] flex items-center justify-center space-x-2"
           :class="hasMask ? 'bg-gradient-to-r from-cyan-400 to-cyan-500 shadow-lg shadow-cyan-500/30' : 'bg-gray-300 dark:bg-neutral-700 text-gray-500 dark:text-gray-400'"
@@ -157,19 +170,6 @@
             <circle cx="11" cy="11" r="2" />
           </svg>
           <span>{{ startEraseText }}</span>
-        </button>
-        <button
-          class="flex-1 py-3.5 rounded-full text-white font-semibold text-base transition-all duration-200 active:scale-[0.98] flex items-center justify-center space-x-2 bg-gradient-to-r from-purple-400 to-purple-500 shadow-lg shadow-purple-500/30"
-          :disabled="isInpaintingLoading"
-          @click="onSuperResolution"
-        >
-          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M15 3h6v6" />
-            <path d="M9 21H3v-6" />
-            <path d="M21 3l-7 7" />
-            <path d="M3 21l7-7" />
-          </svg>
-          <span>{{ upscaleText }}</span>
         </button>
       </div>
 
@@ -861,7 +861,14 @@ const onSuperResolution = async () => {
 // Save to album
 const saveToAlbum = () => {
   const currRender = renders.value.length > 0 ? renders.value[renders.value.length - 1] : original.value
-  downloadImage(currRender.currentSrc, 'IMG')
+  const now = new Date()
+  const timestamp = now.getFullYear().toString() +
+    (now.getMonth() + 1).toString().padStart(2, '0') +
+    now.getDate().toString().padStart(2, '0') +
+    now.getHours().toString().padStart(2, '0') +
+    now.getMinutes().toString().padStart(2, '0') +
+    now.getSeconds().toString().padStart(2, '0')
+  downloadImage(currRender.currentSrc, `IMG${timestamp}`)
 }
 
 const toggleOriginal = () => {
