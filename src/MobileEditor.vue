@@ -27,7 +27,7 @@
           class="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded active:bg-black/80"
           @click="resetZoom"
         >
-          重置缩放
+          {{ resetZoomText }}
         </button>
         <!-- Original image comparison overlay -->
         <div
@@ -64,8 +64,7 @@
           class="z-10 bg-black/50 backdrop-blur-sm absolute top-0 left-0 right-0 bottom-0 flex justify-center items-center"
         >
           <div class="text-lg space-y-5 w-11/12 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-xl p-8">
-            <p class="text-gray-700 dark:text-neutral-200">正在处理中，请耐心等待...</p>
-            <p class="text-gray-700 dark:text-neutral-200">It is being processed, please be patient...</p>
+            <p class="text-gray-700 dark:text-neutral-200">{{ processingText }}</p>
             <Progress :percent="generateProgress" />
           </div>
         </div>
@@ -95,7 +94,7 @@
           <polyline points="7 10 12 15 17 10" />
           <line x1="12" y1="15" x2="12" y2="3" />
         </svg>
-        <span>保存到相册</span>
+        <span>{{ saveToAlbumText }}</span>
       </button>
     </div>
 
@@ -105,7 +104,7 @@
       <div class="flex items-center justify-between w-full py-2">
         <!-- Brush Size Label + Dots -->
         <div class="flex items-center space-x-2">
-          <span class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">画笔粗细</span>
+          <span class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">{{ brushSizeLabelText }}</span>
           <div class="flex items-center space-x-2">
             <button
               v-for="(size, idx) in brushSizes"
@@ -157,7 +156,7 @@
             <path d="M2 2l7.586 7.586" />
             <circle cx="11" cy="11" r="2" />
           </svg>
-          <span>开始擦除</span>
+          <span>{{ startEraseText }}</span>
         </button>
         <button
           class="flex-1 py-3.5 rounded-full text-white font-semibold text-base transition-all duration-200 active:scale-[0.98] flex items-center justify-center space-x-2 bg-gradient-to-r from-purple-400 to-purple-500 shadow-lg shadow-purple-500/30"
@@ -170,7 +169,7 @@
             <path d="M21 3l-7 7" />
             <path d="M3 21l7-7" />
           </svg>
-          <span>4倍放大</span>
+          <span>{{ upscaleText }}</span>
         </button>
       </div>
 
@@ -185,7 +184,7 @@
             <polyline points="7 10 12 15 17 10" />
             <line x1="12" y1="15" x2="12" y2="3" />
           </svg>
-          <span>保存到相册</span>
+          <span>{{ saveToAlbumText }}</span>
         </button>
         <button
           class="flex-1 py-3.5 rounded-full text-white font-semibold text-base transition-all duration-200 active:scale-[0.98] flex items-center justify-center space-x-2 bg-gradient-to-r from-cyan-400 to-cyan-500 shadow-lg shadow-cyan-500/30"
@@ -197,7 +196,7 @@
             <path d="M2 2l7.586 7.586" />
             <circle cx="11" cy="11" r="2" />
           </svg>
-          <span>继续擦除</span>
+          <span>{{ continueEraseText }}</span>
         </button>
       </div>
     </div>
@@ -277,6 +276,41 @@ const MAX_ZOOM = 10
 const upscaleingModelDownloadMessage = computed(() => {
   stateLanguageTag.value
   return m.upscaleing_model_download_message()
+})
+
+const resetZoomText = computed(() => {
+  stateLanguageTag.value
+  return m.reset_zoom()
+})
+
+const processingText = computed(() => {
+  stateLanguageTag.value
+  return m.processing()
+})
+
+const saveToAlbumText = computed(() => {
+  stateLanguageTag.value
+  return m.save_to_album()
+})
+
+const brushSizeLabelText = computed(() => {
+  stateLanguageTag.value
+  return m.brush_size_label()
+})
+
+const startEraseText = computed(() => {
+  stateLanguageTag.value
+  return m.start_erase()
+})
+
+const upscaleText = computed(() => {
+  stateLanguageTag.value
+  return m.upscale()
+})
+
+const continueEraseText = computed(() => {
+  stateLanguageTag.value
+  return m.continue_erase()
 })
 
 // Whether there are any strokes (current or committed) on the canvas

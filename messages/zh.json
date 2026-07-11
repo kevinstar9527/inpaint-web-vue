@@ -13,5 +13,11 @@
 	"undo": "撤销",
 	"inpaint_model_download_message": "需要下载一次30MB大小模型文件,耐心等待。。。",
 	"upscaleing_model_download_message": "需要下载一次70MB大小模型文件,耐心等待。。。",
-	"file_too_large": "文件过大，请选择 20MB 以内的图片"
+	"file_too_large": "文件过大，请选择 20MB 以内的图片",
+	"reset_zoom": "重置缩放",
+	"processing": "正在处理中，请耐心等待...",
+	"save_to_album": "保存到相册",
+	"brush_size_label": "画笔粗细",
+	"start_erase": "开始擦除",
+	"continue_erase": "继续擦除"
 }

@@ -13,5 +13,11 @@
 	"undo": "Undo",
 	"inpaint_model_download_message": "Need to download a 30MB model file, please wait patiently...",
 	"upscaleing_model_download_message": "Need to download a 70MB model file, please wait patiently...",
-	"file_too_large": "File too large, please select an image under 20MB"
+	"file_too_large": "File too large, please select an image under 20MB",
+	"reset_zoom": "Reset Zoom",
+	"processing": "Processing, please wait...",
+	"save_to_album": "Save to Album",
+	"brush_size_label": "Brush Size",
+	"start_erase": "Start Erasing",
+	"continue_erase": "Continue Erasing"
 }
