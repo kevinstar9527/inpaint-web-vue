@@ -150,7 +150,7 @@ function imageDataToDataURL(imageData) {
 
 function configEnv(capabilities) {
   ort.env.wasm.wasmPaths =
-    'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.16.3/dist/'
+    'https://cdn.jsdmirror.com/npm/onnxruntime-web@1.16.3/dist/'
   if (capabilities.threads) {
     ort.env.wasm.numThreads = navigator.hardwareConcurrency ?? 4
   }

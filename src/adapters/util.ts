@@ -49,7 +49,7 @@ export const getCapabilities = async () => {
 }
 const version = '1.16.3'
 export const getTagSrc = async () => {
-  const prefix = `https://cdn.jsdelivr.net/npm/onnxruntime-web@${version}/dist/`
+  const prefix = `https://cdn.jsdmirror.com/npm/onnxruntime-web@${version}/dist/`
   const capablilities = await getCapabilities()
   if (capablilities.webgpu) {
     return `${prefix}ort.webgpu.min.js`
